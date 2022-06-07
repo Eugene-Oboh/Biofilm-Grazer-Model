@@ -1,0 +1,15 @@
+name: biofilm_grazers
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - mesa
+  - pip
+  - python>3
+  - snakemake-minimal
+  - matplotlib
+  - xarray
+  - netcdf4
+  - numpy
+  -
