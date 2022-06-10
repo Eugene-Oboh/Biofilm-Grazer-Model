@@ -7,34 +7,34 @@ rule simulate_model_save_:
         grids="../../data/model_runs/{expname}/biomass_data.nc"
     input:
         model_params="../../data/model_runs/{expname}/model_params.json"
-
     run:
-        import json
+         import json
 
-        with open(input.model_params) as fp:
-            params = json.load(fp)
+         with open(input.model_params) as fp:
+             params = json.load(fp)
 
-        run_params = params['run']
-        model_params = params['model']
-        # print(f'Read in RUN params: {run_params}')
+         run_params = params['run']
+         model_params = params['model']
+         # print(f'Read in RUN params: {run_params}')
 
-        from biog_model.model_runner import run_and_return_biomass
-        biomass_data, durations_mean, duration_std = run_and_return_biomass(
-            run_params=run_params,
-            model_params=model_params
-        )
+         from biog_model.model_runner import run_and_return_biomass
 
-        # np.save(output.grids,biomass_data)
-        biomass_data.to_netcdf(output.grids)
-        print(f'Saved biofilm grids to {output.grids}')
+         biomass_data, durations_mean, duration_std = run_and_return_biomass(
+             run_params=run_params,
+             model_params=model_params
+         )
 
-        metadict = dict(
-            durations_mean=durations_mean,
-            durations_std=duration_std,
-        )
+         # np.save(output.grids,biomass_data)
+         biomass_data.to_netcdf(output.grids)
+         print(f'Saved biofilm grids to {output.grids}')
 
-        with open(output.meta,'w') as fp:
-            json.dump(metadict,fp,indent=2)
+         metadict = dict(
+             durations_mean=durations_mean,
+             durations_std=duration_std,
+         )
+
+         with open(output.meta,'w') as fp:
+             json.dump(metadict,fp,indent=2)
 
 rule plot_grid_tseries_:
     output:
