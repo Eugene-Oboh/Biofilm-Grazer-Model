@@ -6,6 +6,18 @@ from mesa.space import MultiGrid
 from .agents import LogisticBiofilmPatch
 from .schedule import RandomActivationByBreed
 
+class ModelClock:
+    def __init__(self, step_size, day_length, night_length):
+        self.time = 0
+        self.step_size = step_size
+        self.day_length = day_length
+        self.night_length = night_length
+        ...
+
+
+    def increment(self):
+        self.time += self.step_size
+        ...
 
 class BiofilmGridModel(Model):
 
@@ -13,9 +25,9 @@ class BiofilmGridModel(Model):
             self,
             *args,
 
-            phosphorus_conc = 20,
-            phosphorus_kp =2,
-            phosphorus_umax =0.002,
+            phosphorus_conc = 25,
+            phosphorus_kp =3.5,
+            phosphorus_umax =0.0031,
             height=20,
             width=20,
             growth_rate=0.0031,
@@ -42,6 +54,9 @@ class BiofilmGridModel(Model):
         self.schedule = RandomActivationByBreed(self)
         self.grid = MultiGrid(height=self.height, width=self.width, torus=False)
 
+        self.clock = ModelClock(step_size=10, day_length=12*60, night_length=12*60)
+
+
 
     def create_grid_random(self):
 
@@ -51,25 +66,22 @@ class BiofilmGridModel(Model):
             initial_biomass = random.uniform(init_biomass_low, init_biomass_high)
 
 
-            nutrient_gr = self.phosphorus_umax * (self.phosphorus_conc /(self.phosphorus_kp + self.phosphorus_conc))
-            neighbor = sum(self.grid.get_neighborhood(pos=(x, y), moore=False, radius=1)),
-            neighbor_eff = neighbor / 4 * (0.5 / 100)
-
-            print(neighbor_eff)
             patch = LogisticBiofilmPatch(
                 unique_id=self.next_id(),
                 model=self,
                 max_biomass=self.max_biomass,
                 initial_biomass=initial_biomass,
-                growth_rate=nutrient_gr,
-                neighbor_effect=neighbor_eff
+                growth_rate=self.growth_rate
             )
+
             self.grid.place_agent(patch, (x, y))
             self.schedule.add(patch)
 
+    data = np.random.uniform(0.00, 0.005, [20, 20])
+    data[2:5] = 0
     def create_grid_from(self, data: np.ndarray):
 
-        grid_shape = (self.grid.height, self.grid.width)
+        grid_shape = (self.grid.width, self.grid.height)
         if grid_shape != data.shape:
             raise ValueError(f'Given {data.shape=} does not match grid shape ({grid_shape=})')
 
@@ -80,10 +92,11 @@ class BiofilmGridModel(Model):
                 model=self,
                 max_biomass=self.max_biomass,
                 initial_biomass=initial_biomass,
-                 growth_rate=self.growth_rate
+                growth_rate=self.growth_rate
             )
             self.grid.place_agent(patch, (x, y))
             self.schedule.add(patch)
 
     def step(self):
+        self.clock.increment()
         self.schedule.step()
