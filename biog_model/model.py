@@ -7,6 +7,7 @@ from mesa import Model
 from mesa.space import MultiGrid
 from .agents import LogisticBiofilmPatch
 from .schedule import RandomActivationByBreed
+from .environment import Illumination
 
 
 @dataclass
@@ -50,6 +51,7 @@ class BiofilmGridModel(Model):
             height=20,
             width=20,
             clock_params=None,
+            light_params=None,
             biofilm_params=None,
             **kwargs
     ):
@@ -67,6 +69,9 @@ class BiofilmGridModel(Model):
 
         biofilm_params = biofilm_params or {}
         self.biofilm_params = BIOFILM_PARAMS(**biofilm_params)
+
+        light_params = light_params or {}
+        self.illumination = Illumination(**light_params)
 
         self.agent_scheduler = RandomActivationByBreed(self)
         self.grid = MultiGrid(height=self.height, width=self.width, torus=False)
