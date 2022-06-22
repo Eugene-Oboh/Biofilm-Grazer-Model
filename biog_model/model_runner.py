@@ -108,15 +108,22 @@ class Simulation:
 
         self._model = model
 
-
     def create_collector(self):
+
+        def collect_biomass(model):
+            data = np.zeros((model.grid.height, model.grid.width))
+            for agent in model.agent_scheduler.agents_by_breed[LogisticBiofilmPatch].values():
+                # print(agent.pos, agent.biomass)
+                x,y = agent.pos
+                data[y, x] = agent.biomass
+
+            return data
+
         collector = DataCollector(
             {
                 # "time_step": lambda m: m.agent_scheduler.time,
                 "time": lambda m: m.clock.minutes,
-                "biomass": lambda m: np.array(
-                    [a.biomass for a in m.agent_scheduler.agents_by_breed[LogisticBiofilmPatch].values()]
-                ).reshape(self.model.height, self.model.width)
+                "biomass": collect_biomass
                 # "Snail": lambda m: m.schedule.get_breed_count(Snail),
             }
         )
@@ -173,10 +180,10 @@ class Simulation:
         end_time = time.time()
 
         self.run_metadata = dict(
-            start_time = start_time,
+            start_time=start_time,
             durations_mean=np.mean(step_durations),
             durations_std=np.std(step_durations),
-            end_time = end_time
+            end_time=end_time
         )
         self._running = False
 
@@ -198,14 +205,15 @@ class Simulation:
         )
 
         ds = xr.Dataset(dict(
-            biofilm_biomass = biofilm_biomass,
+            biofilm_biomass=biofilm_biomass,
         ))
         return ds
 
     def get_simulation_metadata(self) -> dict:
         return self.run_metadata
 
-def run_simulation(run_params:dict, model_params:dict) -> Simulation:
+
+def run_simulation(run_params: dict, model_params: dict) -> Simulation:
     sim = Simulation(model_params=model_params)
     sim.run(**run_params)
     return sim

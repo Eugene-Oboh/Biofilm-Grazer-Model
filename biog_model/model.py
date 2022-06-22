@@ -11,10 +11,9 @@ from .schedule import RandomActivationByBreed
 
 @dataclass
 class BIOFILM_PARAMS:
-    growth_rate:float = 0.0031  # TODO: units?
-    max_biomass: float = 0.5,    # TODO: units
+    growth_rate: float = 0.0031  # TODO: units?
+    max_biomass: float = 0.5,  # TODO: units
     initial_biomass_percent: T.Tuple[float, float] = (0, 5)  # in percentage of max_biomass
-
 
 
 class Clock:
@@ -72,12 +71,12 @@ class BiofilmGridModel(Model):
         self.agent_scheduler = RandomActivationByBreed(self)
         self.grid = MultiGrid(height=self.height, width=self.width, torus=False)
 
-
     def create_grid_random(self):
         bparams = self.biofilm_params
         # create biofilm patch
         for agent, x, y in self.grid.coord_iter():
-            init_biomass_low, init_biomass_high = [v / 100 * bparams.max_biomass for v in bparams.initial_biomass_percent]
+            init_biomass_low, init_biomass_high = [v / 100 * bparams.max_biomass for v in
+                                                   bparams.initial_biomass_percent]
             initial_biomass = random.uniform(init_biomass_low, init_biomass_high)
 
             patch = LogisticBiofilmPatch(
@@ -89,7 +88,6 @@ class BiofilmGridModel(Model):
             )
             self.grid.place_agent(patch, (x, y))
             self.agent_scheduler.add(patch)
-
 
     def create_grid_from(self, data: np.ndarray):
         bparams = self.biofilm_params
@@ -109,7 +107,6 @@ class BiofilmGridModel(Model):
             )
             self.grid.place_agent(patch, (x, y))
             self.agent_scheduler.add(patch)
-
 
     def step(self):
         """

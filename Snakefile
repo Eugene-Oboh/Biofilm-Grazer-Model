@@ -63,6 +63,39 @@ rule simulate_model_save2_:
         with open(output.meta,'w') as fp:
             json.dump(sim.get_simulation_metadata(),fp,indent=2)
 
+
+rule simulate_model_fixed_start_:
+    output:
+        meta="data/model_runs/fixed_start/simulation_metadata.json",
+        grids="data/model_runs/fixed_start/biomass_data.nc"
+    input:
+        model_params="data/model_runs/fixed_start/model_params.json",
+        initial_biomass="data/model_runs/fixed_start/initial_biomass.nc",
+    run:
+        import json
+        import xarray as xr
+
+        with open(input.model_params) as fp:
+            params = json.load(fp)
+
+        biomass = xr.open_dataarray(input.initial_biomass)
+
+        run_params = params['run']
+        model_params = params['model']
+        # print(f'Read in RUN params: {run_params}')
+
+        from biog_model.model_runner import Simulation
+
+        sim = Simulation(model_params=model_params, initial_biomass=biomass.data)
+        sim.run(**run_params)
+
+        simulation_data = sim.get_simulation_data()
+        print(f'Saving simulation data to {output.grids}')
+        simulation_data.to_netcdf(output.grids)
+
+        with open(output.meta,'w') as fp:
+            json.dump(sim.get_simulation_metadata(),fp,indent=2)
+
 rule plot_grid_tseries_:
     output:
         plot = "data/model_runs/{expname}/grid_timeseries.jpg"
@@ -160,6 +193,7 @@ rule run_experiments:
             ],
             expname=[
                 'try_run',
+                'fixed_start',
                 # 'base/line_model'
                 #'stochastic_start',
             ]
