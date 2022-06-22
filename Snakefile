@@ -3,8 +3,8 @@ matplotlib.use('agg')
 
 rule simulate_model_save_:
     output:
-        meta="data/model_runs/{expname}/simulation_metadata.json",
-        grids="data/model_runs/{expname}/biomass_data.nc"
+        meta="XXdata/model_runs/{expname}/simulation_metadata.json",
+        grids="XXdata/model_runs/{expname}/biomass_data.nc"
     input:
         model_params="data/model_runs/{expname}/model_params.json"
     run:
@@ -34,6 +34,34 @@ rule simulate_model_save_:
 
         with open(output.meta,'w') as fp:
             json.dump(metadict,fp,indent=2)
+
+rule simulate_model_save2_:
+    output:
+        meta="data/model_runs/{expname}/simulation_metadata.json",
+        grids="data/model_runs/{expname}/biomass_data.nc"
+    input:
+        model_params="data/model_runs/{expname}/model_params.json"
+    run:
+        import json
+
+        with open(input.model_params) as fp:
+            params = json.load(fp)
+
+        run_params = params['run']
+        model_params = params['model']
+        # print(f'Read in RUN params: {run_params}')
+
+        from biog_model.model_runner import Simulation
+
+        sim = Simulation(model_params=model_params)
+        sim.run(**run_params)
+
+        simulation_data = sim.get_simulation_data()
+        print(f'Saving simulation data to {output.grids}')
+        simulation_data.to_netcdf(output.grids)
+
+        with open(output.meta,'w') as fp:
+            json.dump(sim.get_simulation_metadata(),fp,indent=2)
 
 rule plot_grid_tseries_:
     output:
