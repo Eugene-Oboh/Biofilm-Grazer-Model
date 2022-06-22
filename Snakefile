@@ -3,11 +3,10 @@ matplotlib.use('agg')
 
 rule simulate_model_save_:
     output:
-        meta="../../data/model_runs/{expname}/simulation_metadata.json",
-        grids="../../data/model_runs/{expname}/biomass_data.nc"
+        meta="data/model_runs/{expname}/simulation_metadata.json",
+        grids="data/model_runs/{expname}/biomass_data.nc"
     input:
-        model_params="../../data/model_runs/{expname}/model_params.json"
-
+        model_params="data/model_runs/{expname}/model_params.json"
     run:
         import json
 
@@ -25,8 +24,8 @@ rule simulate_model_save_:
         )
 
         # np.save(output.grids,biomass_data)
+        print(f'Saving biofilm grids to {output.grids}')
         biomass_data.to_netcdf(output.grids)
-        print(f'Saved biofilm grids to {output.grids}')
 
         metadict = dict(
             durations_mean=durations_mean,
@@ -38,9 +37,9 @@ rule simulate_model_save_:
 
 rule plot_grid_tseries_:
     output:
-        plot = "../../data/model_runs/{expname}/grid_timeseries.jpg"
+        plot = "data/model_runs/{expname}/grid_timeseries.jpg"
     input:
-        data = "../../data/model_runs/{expname}/biomass_data.nc"
+        data = "data/model_runs/{expname}/biomass_data.nc"
 
     run:
         import xarray as xr
@@ -57,9 +56,9 @@ rule plot_grid_tseries_:
 
 rule plot_grid_maps_:
     output:
-        plot="../../data/model_runs/{expname}/grid_maps.jpg"
+        plot="data/model_runs/{expname}/grid_maps.jpg"
     input:
-        data="../../data/model_runs/{expname}/biomass_data.nc"
+        data="data/model_runs/{expname}/biomass_data.nc"
     run:
         import numpy as np
         import matplotlib.pyplot as plt
@@ -99,9 +98,9 @@ rule plot_grid_maps_:
 
 rule plot_mean_std_:
     output:
-        plot = "../../data/model_runs/{expname}/mean_std.jpg"
+        plot = "data/model_runs/{expname}/mean_std.jpg"
     input:
-        data = "../../data/model_runs/{expname}/biomass_data.nc"
+        data = "data/model_runs/{expname}/biomass_data.nc"
 
     run:
         import matplotlib.pyplot as plt
@@ -125,7 +124,7 @@ rule plot_mean_std_:
 
 rule run_experiments:
     input:
-        expand("../../data/model_runs/{expname}/{files}",
+        expand("data/model_runs/{expname}/{files}",
             files=[
                 'grid_timeseries.jpg',
                 'grid_maps.jpg',

@@ -5,7 +5,7 @@ This repo tracks the model definitions and provides tools for running simulation
 
 Installation
 --------------
-Use conda to create an updated environment with
+Use conda to create an environment with the dependencies in their latest versions
 ```shell
 conda env create -f requirements.yml
 ```
@@ -20,6 +20,12 @@ Activate it with:
 conda activate biofilm_grazers
 ```
 
+The Snakefile points to a `data` folder in the same folder. So create a symlink to the data root folder:
+
+```bash
+ln -sf ../../path/to/data data  # use -f if you want to force change existing link
+```
+
 Running simulations
 ----------------------
 
@@ -31,7 +37,7 @@ snakemake -c1 run_experiments
 
 Adapt the `-c` parameter to specify number of CPU cores to use.
 
-Tests can be performed with a file at `../../data/model_runs/trial_run/model_params.json`, with contents:
+Tests can be performed with a file at `data/model_runs/trial_run/model_params.json`, with contents:
 ```json
 {
   "run": {
