@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use('agg')
 
+"""
 rule simulate_model_save_:
     output:
         meta="XXdata/model_runs/{expname}/simulation_metadata.json",
@@ -34,13 +35,14 @@ rule simulate_model_save_:
 
         with open(output.meta,'w') as fp:
             json.dump(metadict,fp,indent=2)
+          """
 
 rule simulate_model_save2_:
     output:
         meta="data/model_runs/{expname}/simulation_metadata.json",
         grids="data/model_runs/{expname}/biomass_data.nc"
     input:
-        model_params="data/model_runs/{expname}/model_params.json"
+        model_params="data/model_runs/{expname}/model_params.json",
     run:
         import json
 
@@ -70,16 +72,18 @@ rule simulate_model_fixed_start_:
         grids="data/model_runs/fixed_start/biomass_data.nc"
     input:
         model_params="data/model_runs/fixed_start/model_params.json",
-        initial_biomass="data/model_runs/fixed_start/initial_biomass.nc",
+        initial_biomass="data/model_runs/fixed_start/initial_biomass.nc"
     run:
         import json
         import xarray as xr
+        import numpy as np
 
         with open(input.model_params) as fp:
             params = json.load(fp)
 
         biomass = xr.open_dataarray(input.initial_biomass)
-
+        #biomass = np.load(input.initial_biomass)
+        print(biomass.shape)
         run_params = params['run']
         model_params = params['model']
         # print(f'Read in RUN params: {run_params}')
@@ -96,6 +100,23 @@ rule simulate_model_fixed_start_:
         with open(output.meta,'w') as fp:
             json.dump(sim.get_simulation_metadata(),fp,indent=2)
 
+rule plot_grid_tseries_mean_:
+    output:
+        plot = "data/model_runs/{expname}/grid_timeseries_mean.jpg"
+    input:
+        data = "data/model_runs/{expname}/biomass_data.nc"
+
+    run:
+        import xarray as xr
+        biomass_grids = xr.open_dataarray(input.data)
+        tseries = biomass_grids.mean(dim=('X', "Y"))
+
+        import matplotlib.pyplot as plt
+        plt.plot(tseries.time, tseries)
+        plt.xlabel('Time (min)')
+        plt.ylabel('Mean biomass (mg/mm2)')
+        plt.savefig(output.plot)
+
 rule plot_grid_tseries_:
     output:
         plot = "data/model_runs/{expname}/grid_timeseries.jpg"
@@ -105,7 +126,7 @@ rule plot_grid_tseries_:
     run:
         import xarray as xr
         biomass_grids = xr.open_dataarray(input.data)
-        tseries = biomass_grids.mean(dim=('X', "Y"))
+        tseries = biomass_grids.sum(dim=('X', "Y"))
 
         import matplotlib.pyplot as plt
         plt.plot(tseries.time, tseries)
@@ -188,13 +209,16 @@ rule run_experiments:
         expand("data/model_runs/{expname}/{files}",
             files=[
                 'grid_timeseries.jpg',
+                'grid_timeseries_mean.jpg',
                 'grid_maps.jpg',
                 'mean_std.jpg'
             ],
             expname=[
+                #'baseline_model',
                 'try_run',
-                'fixed_start',
+                #'fixed_start',
                 # 'base/line_model'
                 #'stochastic_start',
+
             ]
         )

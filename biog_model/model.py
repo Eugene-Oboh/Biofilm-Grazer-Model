@@ -12,8 +12,8 @@ from .environment import Illumination
 
 @dataclass
 class BIOFILM_PARAMS:
-    growth_rate: float = 0.0031  # TODO: units?
-    max_biomass: float = 0.5,  # TODO: units
+    growth_rate: float = 0.004  # per 10 minutes
+    max_biomass: float = 0.5,  # mg/mm2
     initial_biomass_percent: T.Tuple[float, float] = (0, 5)  # in percentage of max_biomass
 
 
@@ -53,6 +53,7 @@ class BiofilmGridModel(Model):
             clock_params=None,
             light_params=None,
             biofilm_params=None,
+            max_light_intensity=1,
             **kwargs
     ):
         """
@@ -63,6 +64,7 @@ class BiofilmGridModel(Model):
         # Set parameters
         self.height = height
         self.width = width
+        self.max_light_intensity = max_light_intensity
 
         clock_params = clock_params or {}
         self.clock = Clock(**clock_params)

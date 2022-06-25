@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import cosine
 
 class Illumination:
-    def __init__(self, day_fraction=0.65, diel_length=24):
+    def __init__(self, day_fraction=0.65, diel_length=1440): #1440 is total minutes in a day
         self.day_fraction = day_fraction
         self.diel_length = diel_length
 
@@ -12,7 +12,7 @@ class Illumination:
 
         #: fraction of diel period that is illuminated
         self.day_fraction = day_fraction
-        #: numer of hours in the illuminated fraction
+        #: numer of minutes in the illuminated fraction
         self.hours_day = day_fraction * self.diel_length
 
         C = 1.0 / np.sqrt(2 * np.pi)

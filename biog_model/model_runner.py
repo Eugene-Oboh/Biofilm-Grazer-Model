@@ -39,7 +39,7 @@ def run_and_return_biomass(run_params: dict, model_params: dict) -> (np.ndarray,
     )
 
     # print(f"collector={collector}")
-
+    """
     # RUN TIME
     num_days = run_params['simulation_time_days']
     step_duration = run_params['step_duration_minutes']
@@ -66,7 +66,7 @@ def run_and_return_biomass(run_params: dict, model_params: dict) -> (np.ndarray,
             collector.collect(model)
             sim_time = step_num * step_duration
             sim_time_in_minutes.append(sim_time)
-
+   
     # collector will have a list of 2D arrays. Create a 3D array from these.
     # createa  labeled array from the simulation
     biomass_grids = xr.DataArray(np.array(collector.model_vars['biomass']),
@@ -83,7 +83,7 @@ def run_and_return_biomass(run_params: dict, model_params: dict) -> (np.ndarray,
     step_durations_std = step_durations.std()
 
     return (biomass_grids, step_durations_mean, step_durations_std)
-
+     """
 
 class Simulation:
     def __init__(self, model_params: dict, initial_biomass=None):
