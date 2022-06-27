@@ -15,7 +15,7 @@ class LogisticBiofilmPatch(Agent):
         self.initial_biomass = initial_biomass
 
     def step(self):
-
+        # Implement light & nutrient effects
         time = self.model.clock.time
         light_intensity = self.model.illumination.get_intensity(time)
         light_growth_rate = self.growth_rate * (light_intensity/(self.model.light_kL + light_intensity))
@@ -31,8 +31,15 @@ class LogisticBiofilmPatch(Agent):
         else:
             light_nutrient_growth_rate = self.growth_rate * (light * nutrient)
 
-
-        print(light_nutrient_growth_rate)
+        # Neighborhood effect
+        neighborhood_biomass = []
+        for neighbor_pos in self.model.grid.get_neighborhood(self.pos, moore=False, radius=1):
+            neighbor_cell = self.model.grid.get_cell_list_contents([neighbor_pos])
+            neighbor_patch = [obj for obj in neighbor_cell if isinstance(obj, LogisticBiofilmPatch)][0]
+            neighbor_biomass = neighbor_patch.biomass
+            neighborhood_biomass.append(neighbor_biomass)
+        neighborhood_effect = sum(neighborhood_biomass) / len(neighborhood_biomass) * (0.01 / 100)
+        print(neighborhood_effect)
         B = self.biomass
-        biomass_change = (light_nutrient_growth_rate * B * np.clip(1 - B/self.max_biomass, 0, 1))
+        biomass_change = (light_nutrient_growth_rate * B * np.clip(1 - B/self.max_biomass, 0, 1)) + neighborhood_effect
         self.biomass = np.clip(B + biomass_change, 0, self.max_biomass)
