@@ -12,7 +12,7 @@ from .environment import Illumination
 
 @dataclass
 class BIOFILM_PARAMS:
-    growth_rate: float = 0.004  # per 10 minutes
+    growth_rate: float = 0.0048  # per 10 minutes
     max_biomass: float = 0.5,  # mg/mm2
     initial_biomass_percent: T.Tuple[float, float] = (0, 5)  # in percentage of max_biomass
 
@@ -48,23 +48,28 @@ class BiofilmGridModel(Model):
     def __init__(
             self,
             *args,
+            phosphorus_conc=35,
+            phosphorus_kp=3.5,
             height=20,
             width=20,
             clock_params=None,
             light_params=None,
             biofilm_params=None,
-            max_light_intensity=1,
+            light_kL=0.05,
+
             **kwargs
     ):
         """
-        Create a new bng model with the given parameters.
+        Create a new biog model with the given parameters.
         """
         super().__init__(*args, **kwargs)
 
         # Set parameters
+        self.light_kL = light_kL
+        self.phosphorus_conc = phosphorus_conc
+        self.phosphorus_kp = phosphorus_kp
         self.height = height
         self.width = width
-        self.max_light_intensity = max_light_intensity
 
         clock_params = clock_params or {}
         self.clock = Clock(**clock_params)
