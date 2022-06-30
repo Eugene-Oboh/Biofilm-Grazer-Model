@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 from mesa import Model
 from mesa.space import MultiGrid
-from .agents import LogisticBiofilmPatch
+from .agents import Gastropods, LogisticBiofilmPatch
 from .schedule import RandomActivationByBreed
 from .environment import Illumination
 
@@ -48,14 +48,20 @@ class BiofilmGridModel(Model):
     def __init__(
             self,
             *args,
+
+            neighborhood_effect=True,
+            light=True,
+            nutrient=True,
+            initial_gastropods=10,
+            init_grazing_eff=0.01,
             phosphorus_conc=35,
             phosphorus_kp=3.5,
+            light_kl=0.05,
             height=20,
             width=20,
             clock_params=None,
             light_params=None,
             biofilm_params=None,
-            light_kL=0.05,
 
             **kwargs
     ):
@@ -65,7 +71,12 @@ class BiofilmGridModel(Model):
         super().__init__(*args, **kwargs)
 
         # Set parameters
-        self.light_kL = light_kL
+        self.neighborhood_effect = neighborhood_effect
+        self.light = light
+        self.nutrient = nutrient
+        self.initial_gastropods = initial_gastropods
+        self.init_grazing_eff = init_grazing_eff
+        self.light_kl = light_kl
         self.phosphorus_conc = phosphorus_conc
         self.phosphorus_kp = phosphorus_kp
         self.height = height
@@ -82,6 +93,14 @@ class BiofilmGridModel(Model):
 
         self.agent_scheduler = RandomActivationByBreed(self)
         self.grid = MultiGrid(height=self.height, width=self.width, torus=False)
+
+        # Create Gastropods:
+        for i in range(self.initial_gastropods):
+            x = self.random.randrange(self.width)
+            y = self.random.randrange(self.height)
+            gastropods = Gastropods(self.next_id(), (x, y), self, True, 0, self.init_grazing_eff)
+            self.grid.place_agent(gastropods, (x, y))
+            self.agent_scheduler.add(gastropods)
 
     def create_grid_random(self):
         bparams = self.biofilm_params
