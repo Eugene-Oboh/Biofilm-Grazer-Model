@@ -217,3 +217,5 @@ def run_simulation(run_params: dict, model_params: dict) -> Simulation:
     sim = Simulation(model_params=model_params)
     sim.run(**run_params)
     return sim
+
+

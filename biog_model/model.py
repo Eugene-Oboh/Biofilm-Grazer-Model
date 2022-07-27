@@ -16,6 +16,14 @@ class BIOFILM_PARAMS:
     max_biomass: float = 0.5,  # mg/mm2
     initial_biomass_percent: T.Tuple[float, float] = (0, 5)  # in percentage of max_biomass
 
+class GRAZER_PARAMS:
+    def __init__(self, initial_gastropods=0, init_grazer_biomass=0, grazing_rate_percent_of_biomass=0, percent_of_food_to_weight=0, max_grazer_biomass=0):
+        self.initial_gastropods = initial_gastropods
+        self.init_grazer_biomass = init_grazer_biomass
+        self.grazing_rate_percent_of_biomass = grazing_rate_percent_of_biomass
+        self.percent_of_food_to_weight = percent_of_food_to_weight
+        self.max_grazer_biomass = max_grazer_biomass
+
 
 class Clock:
     """
@@ -50,18 +58,15 @@ class BiofilmGridModel(Model):
             *args,
 
             neighborhood_effect=True,
-            light=True,
-            nutrient=True,
-            initial_gastropods=10,
-            init_grazing_eff=0.01,
             phosphorus_conc=35,
             phosphorus_kp=3.5,
-            light_kl=0.05,
-            height=20,
-            width=20,
+            light_kl=0.1,
+            height=50,
+            width=50,
             clock_params=None,
             light_params=None,
             biofilm_params=None,
+            grazer_params=None,
 
             **kwargs
     ):
@@ -72,10 +77,6 @@ class BiofilmGridModel(Model):
 
         # Set parameters
         self.neighborhood_effect = neighborhood_effect
-        self.light = light
-        self.nutrient = nutrient
-        self.initial_gastropods = initial_gastropods
-        self.init_grazing_eff = init_grazing_eff
         self.light_kl = light_kl
         self.phosphorus_conc = phosphorus_conc
         self.phosphorus_kp = phosphorus_kp
@@ -88,17 +89,23 @@ class BiofilmGridModel(Model):
         biofilm_params = biofilm_params or {}
         self.biofilm_params = BIOFILM_PARAMS(**biofilm_params)
 
+        grazer_params = grazer_params or {}
+        self.grazer_params = GRAZER_PARAMS(**grazer_params)
+
+
         light_params = light_params or {}
         self.illumination = Illumination(**light_params)
 
         self.agent_scheduler = RandomActivationByBreed(self)
         self.grid = MultiGrid(height=self.height, width=self.width, torus=False)
 
+
         # Create Gastropods:
-        for i in range(self.initial_gastropods):
+        for i in range(self.grazer_params.initial_gastropods):
             x = self.random.randrange(self.width)
             y = self.random.randrange(self.height)
-            gastropods = Gastropods(self.next_id(), (x, y), self, True, 0, self.init_grazing_eff)
+            gastropods = Gastropods(self.next_id(), (x, y), self, True, 0, self.grazer_params.grazing_rate_percent_of_biomass,
+                                    self.grazer_params.init_grazer_biomass, self.grazer_params.percent_of_food_to_weight, self.grazer_params.max_grazer_biomass)
             self.grid.place_agent(gastropods, (x, y))
             self.agent_scheduler.add(gastropods)
 
@@ -115,7 +122,8 @@ class BiofilmGridModel(Model):
                 model=self,
                 max_biomass=bparams.max_biomass,
                 initial_biomass=initial_biomass,
-                growth_rate=bparams.growth_rate
+                growth_rate=bparams.growth_rate,
+                #all_growth_rate=self.all_growth_rate
             )
             self.grid.place_agent(patch, (x, y))
             self.agent_scheduler.add(patch)
@@ -148,3 +156,4 @@ class BiofilmGridModel(Model):
         """
         self.clock.increment()
         self.agent_scheduler.step()  # this updates all agents in order of agent class(?)
+

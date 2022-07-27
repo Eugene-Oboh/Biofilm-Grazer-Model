@@ -68,11 +68,46 @@ rule simulate_model_save2_:
 
 rule simulate_model_fixed_start_:
     output:
-        meta="data/model_runs/fixed_start/simulation_metadata.json",
-        grids="data/model_runs/fixed_start/biomass_data.nc"
+        meta="data/model_runs/neighborhood_effect/simulation_metadata.json",
+        grids="data/model_runs/neighborhood_effect/biomass_data.nc"
     input:
-        model_params="data/model_runs/fixed_start/model_params.json",
-        initial_biomass="data/model_runs/fixed_start/initial_biomass.nc"
+        model_params="data/model_runs/neighborhood_effect/model_params.json",
+        initial_biomass="data/model_runs/neighborhood_effect/initial_biomass.nc"
+    run:
+        import json
+        import xarray as xr
+        import numpy as np
+
+        with open(input.model_params) as fp:
+            params = json.load(fp)
+
+        biomass = xr.open_dataarray(input.initial_biomass)
+        #biomass = np.load(input.initial_biomass)
+        print(biomass.shape)
+        run_params = params['run']
+        model_params = params['model']
+        # print(f'Read in RUN params: {run_params}')
+
+        from biog_model.model_runner import Simulation
+
+        sim = Simulation(model_params=model_params, initial_biomass=biomass.data)
+        sim.run(**run_params)
+
+        simulation_data = sim.get_simulation_data()
+        print(f'Saving simulation data to {output.grids}')
+        simulation_data.to_netcdf(output.grids)
+
+        with open(output.meta,'w') as fp:
+            json.dump(sim.get_simulation_metadata(),fp,indent=2)
+
+
+rule neighborhood_effect_:
+    output:
+        meta="data/model_runs/neighborhood_effect_off/simulation_metadata.json",
+        grids="data/model_runs/neighborhood_effect_off/biomass_data.nc"
+    input:
+        model_params="data/model_runs/neighborhood_effect_off/model_params.json",
+        initial_biomass="data/model_runs/neighborhood_effect_off/initial_biomass.nc"
     run:
         import json
         import xarray as xr
@@ -110,11 +145,12 @@ rule plot_grid_tseries_mean_:
         import xarray as xr
         biomass_grids = xr.open_dataarray(input.data)
         tseries = biomass_grids.mean(dim=('X', "Y"))
+        #tseries1 = biomass_grids.std(dim=('X', "Y"))
 
         import matplotlib.pyplot as plt
-        plt.plot(tseries.time, tseries)
-        plt.xlabel('Time (min)')
-        plt.ylabel('Mean biomass (mg/mm2)')
+        plt.plot(tseries.time/1440, tseries)
+        plt.xlabel('Time (days)')
+        plt.ylabel('Mean biomass of grid (mg/cm2)')
         plt.savefig(output.plot)
 
 rule plot_grid_tseries_:
@@ -129,9 +165,9 @@ rule plot_grid_tseries_:
         tseries = biomass_grids.sum(dim=('X', "Y"))
 
         import matplotlib.pyplot as plt
-        plt.plot(tseries.time, tseries)
-        plt.xlabel('Time (min)')
-        plt.ylabel('Mean biomass (mg/mm2)')
+        plt.plot(tseries.time/1440, tseries)
+        plt.xlabel('Time (days)')
+        plt.ylabel('Total grid biomass (mg/cm2)')
         plt.savefig(output.plot)
 
 
@@ -146,37 +182,36 @@ rule plot_grid_maps_:
         import matplotlib.pyplot as plt
 
         import xarray as xr
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-        num_plots = 4
+        #num_plots = 4
         biomass_grids = xr.open_dataarray(input.data)
-        tcoord = biomass_grids.time
-        num_tpoints = len(tcoord)
-        selected_tpoints = tcoord[:: num_tpoints// num_plots ]
+        #tcoord = biomass_grids.time
+        #num_tpoints = len(tcoord)
+        #selected_tpoints = tcoord[:: num_tpoints // num_plots]
+        selected_tpoints = [0, 10080, 20160, 30240, 50400, 80640]
 
-        print(f'Selected timepoints: {selected_tpoints}')
+        #print(f'Selected timepoints: {selected_tpoints}')
 
         biomass_grids_ = biomass_grids.sel(time=selected_tpoints)
         vmin = biomass_grids_.min()
         vmax = biomass_grids_.max()
 
-
-        fig, axes = plt.subplots(nrows=1, ncols=4, sharex=True, sharey=True)
-
+        fig, axes = plt.subplots(nrows=1,ncols=6,sharex=True,sharey=True,figsize=(15, 6))
         for idx in range(len(axes)):
             tidx = biomass_grids_.time[idx]
             grid_map = biomass_grids_.isel(time=idx)
-            print(f'{idx=} {tidx=} {grid_map.shape=}')
+            #print(f'{idx=} {tidx=} {grid_map.shape=}')
             ax = axes[idx]
-            aximg = ax.imshow(grid_map, vmin=vmin, vmax=vmax)
-            ax.set_title(f'{float(tidx.data):.1f} min')
+            aximg = ax.imshow(grid_map,vmin=vmin,vmax=vmax,interpolation='none')
+            ax.set_title(f'day {(tidx.data) / 1440:.1f}',size=20)
 
-
-        plt.colorbar(aximg)
-        plt.xlabel('dimension')
-        plt.ylabel('dimension')
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right",size="5%",pad=0.05)
+        plt.colorbar(aximg,cax=cax).set_label(label='biomass(mg/mm2)',size=12,weight='bold')
+        #plt.colorbar()
         fig.tight_layout()
         plt.savefig(output.plot)
-
 
 rule plot_mean_std_:
     output:
@@ -189,18 +224,19 @@ rule plot_mean_std_:
         import xarray as xr
 
         biomass_grids = xr.open_dataarray(input.data)
-
-        # TODO: use plt.twinx or subplots to separate mean & std plots
-        
+        biomass_grids.coords['days'] = biomass_grids['time'] / 1440
         plt.figure()
         ax = plt.subplot(111)
         ax2 = plt.twinx(ax)
-        lines1 = biomass_grids.isel(X=slice(5,15),Y=slice(5,15)).mean(['X', 'Y']).plot(ax=ax, color='C0')
-        lines2 = biomass_grids.isel(X=slice(5,15),Y=slice(5,15)).std(['X', 'Y']).plot(ax=ax2, color='C1')
-        ax.set_ylabel('Mean of biomass (mg/mm2)')
-        ax2.set_ylabel('StdDev of biomass (mg/mm2)')
-        plt.xlabel('Time (min)')
+        #lines1 = biomass_grids.isel(X=slice(50,50),Y=slice(50,50)).mean(['X', 'Y']).plot(ax=ax, color='C0')
+        #lines2 = biomass_grids.isel(X=slice(50,50),Y=slice(50,50)).std(['X', 'Y']).plot(ax=ax2, color='C1')
+        lines1 = biomass_grids.mean(dim=('X', "Y")).plot(ax=ax, x='days', color='C0')
+        lines2 = biomass_grids.std(dim=('X', "Y")).plot(ax=ax2, x='days', color='C1')
+        ax.set_ylabel('Mean biomass of grid (mg/cm2)')
+        ax2.set_ylabel('StdDev of biomass (mg/cm2)')
+        ax.set_xlabel('Time (days)')
         plt.legend(lines1+lines2, ['Mean', 'Stdev'])
+
         plt.savefig(output.plot)
 
 
@@ -215,10 +251,20 @@ rule run_experiments:
             ],
             expname=[
                 #'baseline_model',
-                'try_run',
+                #'try_run',
                 #'fixed_start',
-                # 'base/line_model'
-                #'stochastic_start',
+                'grazing_effect',
+                #'grazing_effect_lowP',
+                 #'nutrient_effect_only',
+                 #'light_effect_only',
+                #'neighborhood_effect',
+                #'neighborhood_effect_off',
+                #'light_and_nutrient_effect',
+                #'light_and_nutrient_and_neigh',
+                #'s1_p0.5',
+                #'s1_p2',
+                #'s1_p35',
+                #'s1_p100',
 
             ]
         )
