@@ -1,43 +1,7 @@
 import matplotlib
 matplotlib.use('agg')
 
-"""
 rule simulate_model_save_:
-    output:
-        meta="XXdata/model_runs/{expname}/simulation_metadata.json",
-        grids="XXdata/model_runs/{expname}/biomass_data.nc"
-    input:
-        model_params="data/model_runs/{expname}/model_params.json"
-    run:
-        import json
-
-        with open(input.model_params) as fp:
-            params = json.load(fp)
-
-        run_params = params['run']
-        model_params = params['model']
-        # print(f'Read in RUN params: {run_params}')
-
-        from biog_model.model_runner import run_and_return_biomass
-        biomass_data, durations_mean, duration_std = run_and_return_biomass(
-            run_params=run_params,
-            model_params=model_params
-        )
-
-        # np.save(output.grids,biomass_data)
-        print(f'Saving biofilm grids to {output.grids}')
-        biomass_data.to_netcdf(output.grids)
-
-        metadict = dict(
-            durations_mean=durations_mean,
-            durations_std=duration_std,
-        )
-
-        with open(output.meta,'w') as fp:
-            json.dump(metadict,fp,indent=2)
-          """
-
-rule simulate_model_save2_:
     output:
         meta="data/model_runs/{expname}/simulation_metadata.json",
         grids="data/model_runs/{expname}/biomass_data.nc"
@@ -228,8 +192,6 @@ rule plot_mean_std_:
         plt.figure()
         ax = plt.subplot(111)
         ax2 = plt.twinx(ax)
-        #lines1 = biomass_grids.isel(X=slice(50,50),Y=slice(50,50)).mean(['X', 'Y']).plot(ax=ax, color='C0')
-        #lines2 = biomass_grids.isel(X=slice(50,50),Y=slice(50,50)).std(['X', 'Y']).plot(ax=ax2, color='C1')
         lines1 = biomass_grids.mean(dim=('X', "Y")).plot(ax=ax, x='days', color='C0')
         lines2 = biomass_grids.std(dim=('X', "Y")).plot(ax=ax2, x='days', color='C1')
         ax.set_ylabel('Mean biomass of grid (mg/cm2)')
@@ -238,7 +200,6 @@ rule plot_mean_std_:
         plt.legend(lines1+lines2, ['Mean', 'Stdev'])
 
         plt.savefig(output.plot)
-
 
 
 
@@ -253,24 +214,25 @@ rule run_experiments:
             ],
             expname=[
                 #'scenario_kp10/baseline_model',
+                'grazing_effect'
                 #'try_run',
 
-                #'scenario_kp10/scenario/p2-g0',
-                #'scenario_kp10/scenario/p2-g1',
-                #'scenario_kp10/scenario/p2-g3',
-                #'scenario_kp10/scenario/p2-g6',
-                #'scenario_kp10/scenario/p2-g10',
-                #'scenario_kp10/scenario/p2-g20',
-                #'scenario_kp10/scenario/p2-g25',
-                #'scenario_kp10/scenario/p2-g30',
-                #'scenario_kp10/scenario/p2-g35',
-                #'scenario_kp10/scenario/p2-g40',
+                #'scenario_kp10/scenario/p100-g0',
+                #'scenario_kp10/scenario/p100-g1',
+                #'scenario_kp10/scenario/p100-g3',
+                #'scenario_kp10/scenario/p100-g6',
+                #'scenario_kp10/scenario/p100-g10',
+                #'scenario_kp10/scenario/p100-g20',
+                #'scenario_kp10/scenario/p100-g25',
+                #'scenario_kp10/scenario/p100-g30',
+                #'scenario_kp10/scenario/p100-g35',
+
                 #'scenario_kp10/scenario/p5-g0',
                 #'scenario_kp10/scenario/p5-g1',
                 #'scenario_kp10/scenario/p5-g3',
                 #'scenario_kp10/scenario/p5-g6',
                 #'scenario_kp10/scenario/p5-g10',
-                'scenario/p5-g10',
+                #'scenario/p5-g10',
                 #'scenario_kp10/scenario/p5-g20',
                 #'scenario_kp10/scenario/p5-g25',
                 #'scenario_kp10/scenario/p5-g30',

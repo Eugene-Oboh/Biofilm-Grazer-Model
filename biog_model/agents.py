@@ -44,15 +44,15 @@ class Gastropods(RandomWalker):
         self.biomass += (self.percent_of_food_to_weight * self.grazing_rate) / 100
         self.biomass = np.clip(self.biomass, 0, self.max_grazer_biomass)
         #self.biomass = np.clip(self.init_grazer_biomass, self.max_grazer_biomass)
-        if self.model.phosphorus_conc <=5:
-            self.grazing_rate = (self.grazing_rate_percent_of_biomass * self.biomass)/100 * 1.4
-        else:
-            self.grazing_rate = (self.grazing_rate_percent_of_biomass * self.biomass) / 100
-        biofilm_patch.biomass -= (self.grazing_rate)
+        #if self.model.phosphorus_conc <=5:
+        #self.grazing_rate = (self.grazing_rate_percent_of_biomass * self.biomass)/100 * 1.1
+        #else:
+        self.grazing_rate = (self.grazing_rate_percent_of_biomass * self.biomass) / 100
+        biofilm_patch.biomass -= self.grazing_rate
         biofilm_patch.biomass = np.clip(biofilm_patch.biomass, 0, biofilm_patch.max_biomass)
         #print(self.biomass)
 
-        print(f'this is grazer biomass {self.biomass=} at {self.grazing_rate=}')
+        #print(f'this is grazer biomass {self.biomass=} at {self.grazing_rate=}')
 
 
     """
@@ -112,7 +112,7 @@ class LogisticBiofilmPatch(Agent):
 
         #print(light_nutrient_growth_rate)
         B = self.biomass
-        biomass_change = (light_nutrient_growth_rate * B * np.clip(1 - B/self.max_biomass, 0, 1)) + neighbor_effect
+        biomass_change = (self.growth_rate * B * np.clip(1 - B/self.max_biomass, 0, 1)) + neighbor_effect
         self.biomass = np.clip(B + biomass_change, 0, self.max_biomass)
         #self.biomass_grazed = 0
 

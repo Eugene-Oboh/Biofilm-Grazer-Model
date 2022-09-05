@@ -59,7 +59,7 @@ class BiofilmGridModel(Model):
 
             neighborhood_effect=True,
             phosphorus_conc=35,
-            phosphorus_kp=3.5,
+            phosphorus_kp=10,
             light_kl=0.1,
             height=50,
             width=50,
