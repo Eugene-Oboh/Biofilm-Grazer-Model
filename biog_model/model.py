@@ -61,12 +61,13 @@ class BiofilmGridModel(Model):
             phosphorus_conc=35,
             phosphorus_kp=10,
             light_kl=0.1,
-            height=50,
-            width=50,
+            height=20,
+            width=20,
             clock_params=None,
             light_params=None,
             biofilm_params=None,
             grazer_params=None,
+            biofilm=True,
 
             **kwargs
     ):
@@ -82,6 +83,7 @@ class BiofilmGridModel(Model):
         self.phosphorus_kp = phosphorus_kp
         self.height = height
         self.width = width
+        self.biofilm = biofilm
 
         clock_params = clock_params or {}
         self.clock = Clock(**clock_params)
@@ -98,7 +100,6 @@ class BiofilmGridModel(Model):
 
         self.agent_scheduler = RandomActivationByBreed(self)
         self.grid = MultiGrid(height=self.height, width=self.width, torus=False)
-
 
         # Create Gastropods:
         for i in range(self.grazer_params.initial_gastropods):
@@ -123,10 +124,10 @@ class BiofilmGridModel(Model):
                 max_biomass=bparams.max_biomass,
                 initial_biomass=initial_biomass,
                 growth_rate=bparams.growth_rate,
-                #all_growth_rate=self.all_growth_rate
             )
             self.grid.place_agent(patch, (x, y))
             self.agent_scheduler.add(patch)
+
 
     def create_grid_from(self, data: np.ndarray):
         bparams = self.biofilm_params
@@ -156,4 +157,6 @@ class BiofilmGridModel(Model):
         """
         self.clock.increment()
         self.agent_scheduler.step()  # this updates all agents in order of agent class(?)
+
+
 

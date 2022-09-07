@@ -1,7 +1,8 @@
 import matplotlib
 matplotlib.use('agg')
 
-rule simulate_model_save_:
+
+rule simulate_model_save2_:
     output:
         meta="data/model_runs/{expname}/simulation_metadata.json",
         grids="data/model_runs/{expname}/biomass_data.nc"
@@ -192,6 +193,8 @@ rule plot_mean_std_:
         plt.figure()
         ax = plt.subplot(111)
         ax2 = plt.twinx(ax)
+        #lines1 = biomass_grids.isel(X=slice(50,50),Y=slice(50,50)).mean(['X', 'Y']).plot(ax=ax, color='C0')
+        #lines2 = biomass_grids.isel(X=slice(50,50),Y=slice(50,50)).std(['X', 'Y']).plot(ax=ax2, color='C1')
         lines1 = biomass_grids.mean(dim=('X', "Y")).plot(ax=ax, x='days', color='C0')
         lines2 = biomass_grids.std(dim=('X', "Y")).plot(ax=ax2, x='days', color='C1')
         ax.set_ylabel('Mean biomass of grid (mg/cm2)')

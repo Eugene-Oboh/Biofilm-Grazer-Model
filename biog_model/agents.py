@@ -35,7 +35,6 @@ class Gastropods(RandomWalker):
         if light_intensity <= 0.01:
             return
         self.random_move()
-        #if self.model.biofilm:
 
         # If there is biofilm define grazing efficiency
         this_cell = self.model.grid.get_cell_list_contents([self.pos])
@@ -43,27 +42,10 @@ class Gastropods(RandomWalker):
 
         self.biomass += (self.percent_of_food_to_weight * self.grazing_rate) / 100
         self.biomass = np.clip(self.biomass, 0, self.max_grazer_biomass)
-        #self.biomass = np.clip(self.init_grazer_biomass, self.max_grazer_biomass)
-        #if self.model.phosphorus_conc <=5:
-        #self.grazing_rate = (self.grazing_rate_percent_of_biomass * self.biomass)/100 * 1.1
-        #else:
         self.grazing_rate = (self.grazing_rate_percent_of_biomass * self.biomass) / 100
         biofilm_patch.biomass -= self.grazing_rate
         biofilm_patch.biomass = np.clip(biofilm_patch.biomass, 0, biofilm_patch.max_biomass)
-        #print(self.biomass)
 
-        #print(f'this is grazer biomass {self.biomass=} at {self.grazing_rate=}')
-
-
-    """
-        if biofilm_patch.biomass:
-            self.grazing_rate = self.init_grazing_rate
-            for i in range(time):
-                if i % 1440 ==0:
-                    self.grazing_rate = self.grazing_rate + 0.001
-
-                biofilm_patch.biomass_grazed = self.grazing_rate
-     """
 
 
 class LogisticBiofilmPatch(Agent):
@@ -92,10 +74,6 @@ class LogisticBiofilmPatch(Agent):
         light_nutrient_growth_rate = self.growth_rate * (light * nutrient)
         #print(light_nutrient_growth_rate)
 
-
-        #light_growth_rate = self.growth_rate * (light_intensity/(self.model.light_kl + light_intensity))
-        #nutrient_growth_rate = self.growth_rate * (self.model.phosphorus_conc / (self.model.phosphorus_kp + self.model.phosphorus_conc))
-
         # Neighborhood effect
         neighborhood_biomass = []
         for neighbor_pos in self.model.grid.get_neighborhood(self.pos, moore=False, radius=1):
@@ -112,7 +90,7 @@ class LogisticBiofilmPatch(Agent):
 
         #print(light_nutrient_growth_rate)
         B = self.biomass
-        biomass_change = (self.growth_rate * B * np.clip(1 - B/self.max_biomass, 0, 1)) + neighbor_effect
+        biomass_change = (light_nutrient_growth_rate * B * np.clip(1 - B/self.max_biomass, 0, 1)) + neighbor_effect
         self.biomass = np.clip(B + biomass_change, 0, self.max_biomass)
         #self.biomass_grazed = 0
 
